@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import axiosInstance from "../utils/api";
-import { ShoppingCart, X, Plus, Minus, Printer, Settings, Search, Tag, Package, DollarSign, ChevronLeft, RefreshCw } from "lucide-react";
+import { ShoppingCart, X, Plus, Minus, Printer, Settings, Search, Tag, Package, DollarSign, ChevronLeft, RefreshCw, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const POSPage = () => {
@@ -25,8 +25,10 @@ const POSPage = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [refreshingProducts, setRefreshingProducts] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const billRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // Get user from localStorage
   const user = JSON.parse(localStorage.getItem("ims_user"));
@@ -71,31 +73,56 @@ const POSPage = () => {
     localStorage.setItem("ims_cart", JSON.stringify(orderData));
   }, [orderData]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleFilterProducts = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    setFilteredProducts(
-      products.filter((product) =>
+    let filtered = products;
+
+    if (selectedCategory) {
+      filtered = filtered.filter((product) => product.category._id === selectedCategory);
+    }
+
+    if (query) {
+      filtered = filtered.filter((product) =>
         product.name.toLowerCase().includes(query.toLowerCase())
-      )
-    );
+      );
+    }
+
+    setFilteredProducts(filtered);
   };
 
   const handleChangeCategory = (categoryId) => {
     if (categoryId === selectedCategory) {
       setSelectedCategory("");
-      setFilteredProducts(products);
-    } else {
       setFilteredProducts(
-        products.filter((product) => product.category._id === categoryId)
+        searchQuery
+          ? products.filter((product) =>
+              product.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+          : products
       );
+    } else {
       setSelectedCategory(categoryId);
+      let filtered = products.filter((product) => product.category._id === categoryId);
+      if (searchQuery) {
+        filtered = filtered.filter((product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      setFilteredProducts(filtered);
     }
-  };
-
-  const handleClearCategory = () => {
-    setSelectedCategory("");
-    setFilteredProducts(products);
+    setShowCategoryDropdown(false);
   };
 
   const handleOrderClick = (product) => {
@@ -421,12 +448,19 @@ const POSPage = () => {
     return (parseFloat(orderData.totalAmount) + parseFloat(calculateTax())).toFixed(2);
   };
 
+  const getSelectedCategoryName = () => {
+    if (!selectedCategory) return "All Categories";
+    const category = categories.find((cat) => cat._id === selectedCategory);
+    return category ? category.name : "All Categories";
+  };
+
   const CartToggleButton = () => (
     <motion.button
       onClick={() => setShowCart(!showCart)}
       className="md:hidden fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-full shadow-xl z-50"
       whileTap={{ scale: 0.95 }}
       whileHover={{ scale: 1.05 }}
+      aria-label="Toggle cart"
     >
       <ShoppingCart size={24} />
       {orderData.products.length > 0 && (
@@ -441,7 +475,7 @@ const POSPage = () => {
     </motion.button>
   );
 
-  // Memoize filtered products to prevent unnecessary re-renders
+  // Memoize filtered products
   const memoizedFilteredProducts = useMemo(() => filteredProducts, [filteredProducts]);
 
   return (
@@ -464,9 +498,10 @@ const POSPage = () => {
               onClick={() => setShowSettings(!showSettings)}
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm transition-colors"
               whileHover={{ y: -1 }}
+              aria-label="Open settings"
             >
               <Settings size={18} />
-              <span className="hidden sm:inline">Settingsss</span>
+              <span className="hidden sm:inline">Settings_on</span>
             </motion.button>
           </div>
         </div>
@@ -492,6 +527,7 @@ const POSPage = () => {
                 <button
                   onClick={() => setShowSettings(false)}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label="Close settings"
                 >
                   <X size={24} />
                 </button>
@@ -584,6 +620,7 @@ const POSPage = () => {
                 <button
                   onClick={handleNewOrder}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label="Close invoice"
                 >
                   <X size={24} />
                 </button>
@@ -688,62 +725,83 @@ const POSPage = () => {
           <div className={`w-full md:w-8/12 flex flex-col bg-white ${showCart ? 'hidden md:flex' : 'flex'}`}>
             {/* Search and filter */}
             <div className="p-4 border-b border-gray-200">
-              <div className="relative flex items-center">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={18} className="text-gray-400" />
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search Bar */}
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleFilterProducts}
+                    placeholder="Search products..."
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                    disabled={loading}
+                    aria-label="Search products"
+                  />
                 </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleFilterProducts}
-                  placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                  disabled={loading}
-                />
+
+                {/* Category Dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <motion.button
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                    className="flex items-center justify-between w-full sm:w-48 bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-all"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    aria-haspopup="true"
+                    aria-expanded={showCategoryDropdown}
+                  >
+                    <span className="truncate">{getSelectedCategoryName()}</span>
+                    <ChevronDown size={18} className={`ml-2 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                  </motion.button>
+                  <AnimatePresence>
+                    {showCategoryDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-10 w-full sm:w-48 bg-white border border-gray-200 rounded-xl shadow-lg mt-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50"
+                        role="menu"
+                      >
+                        <button
+                          onClick={() => handleChangeCategory("")}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                          role="menuitem"
+                        >
+                          All Categories
+                        </button>
+                        {categories.map((category) => (
+                          <button
+                            key={category._id}
+                            onClick={() => handleChangeCategory(category._id)}
+                            className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                              selectedCategory === category._id
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'text-gray-700 hover:bg-blue-50'
+                            }`}
+                            role="menuitem"
+                          >
+                            <Tag size={14} className="inline-block mr-2" />
+                            {category.name}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Refresh Button */}
                 <motion.button
                   onClick={fetchProducts}
-                  className="ml-2 p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                  className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
                   whileHover={{ rotate: 180 }}
                   whileTap={{ scale: 0.9 }}
                   disabled={refreshingProducts}
+                  aria-label="Refresh products"
                 >
                   <RefreshCw size={18} className={refreshingProducts ? "animate-spin" : ""} />
                 </motion.button>
-              </div>
-            </div>
-
-            {/* Categories */}
-            <div className="px-4 py-3 border-b border-gray-200 bg-blue-50">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-700">Categories</h3>
-                {selectedCategory && (
-                  <motion.button
-                    onClick={handleClearCategory}
-                    className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-200 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Clear Filter
-                  </motion.button>
-                )}
-              </div>
-              <div className="flex space-x-2 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
-                {categories.map((category) => (
-                  <motion.button
-                    key={category._id}
-                    onClick={() => handleChangeCategory(category._id)}
-                    className={`flex items-center px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
-                      selectedCategory === category._id
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
-                        : "bg-white text-gray-700 hover:bg-blue-100 border border-blue-100"
-                    }`}
-                    whileHover={{ y: -1 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Tag size={14} className="mr-2" />
-                    {category.name}
-                  </motion.button>
-                ))}
               </div>
             </div>
 
@@ -761,7 +819,7 @@ const POSPage = () => {
                   <p className="text-sm mt-2">Try a different search or category</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                   {memoizedFilteredProducts.map((product) => (
                     <motion.div
                       key={product._id}
@@ -770,6 +828,8 @@ const POSPage = () => {
                         product.stock > 0 ? "hover:border-blue-300" : "opacity-70 cursor-not-allowed"
                       }`}
                       whileHover={{ y: -3 }}
+                      role="button"
+                      aria-label={`Add ${product.name} to cart`}
                     >
                       <div>
                         <div className="bg-blue-100 p-3 rounded-lg flex items-center justify-center mb-3 h-24">
@@ -822,6 +882,7 @@ const POSPage = () => {
                 <button
                   onClick={() => setShowCart(false)}
                   className="md:hidden mr-3 text-blue-200 hover:text-white"
+                  aria-label="Back to products"
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -834,6 +895,7 @@ const POSPage = () => {
                 <button
                   onClick={() => setOrderData({ products: [], totalAmount: 0 })}
                   className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition-colors"
+                  aria-label="Clear cart"
                 >
                   Clear All
                 </button>
@@ -867,6 +929,7 @@ const POSPage = () => {
                             onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
                             className="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
                             whileTap={{ scale: 0.9 }}
+                            aria-label={`Decrease quantity of ${product?.name}`}
                           >
                             <Minus size={14} />
                           </motion.button>
@@ -880,6 +943,7 @@ const POSPage = () => {
                                 : "bg-blue-100 hover:bg-blue-200"
                             }`}
                             whileTap={{ scale: 0.9 }}
+                            aria-label={`Increase quantity of ${product?.name}`}
                           >
                             <Plus size={14} />
                           </motion.button>
@@ -892,6 +956,7 @@ const POSPage = () => {
                           className="ml-2 text-red-500 hover:text-red-700 transition-colors"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
+                          aria-label={`Remove ${product?.name} from cart`}
                         >
                           <X size={16} />
                         </motion.button>
@@ -924,6 +989,7 @@ const POSPage = () => {
                 className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-70 text-white py-3 rounded-xl font-medium transition-all shadow-md"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
+                aria-label="Checkout"
               >
                 <DollarSign size={18} className="mr-2" />
                 {loading ? "Processing..." : "Checkout"}

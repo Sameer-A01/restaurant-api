@@ -7,10 +7,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        "sevillana": ["Sevillana", "sans-serif"]
-      }
+        sevillana: ["Sevillana", "sans-serif"],
+      },
     },
   },
-  plugins: [],
-}
-
+  plugins: [
+    require('tailwindcss-scrollbar'),
+  ],
+};
