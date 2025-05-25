@@ -466,7 +466,7 @@ const POSPage = () => {
               whileHover={{ y: -1 }}
             >
               <Settings size={18} />
-              <span className="hidden sm:inline">Setting</span>
+              <span className="hidden sm:inline">Settingsss</span>
             </motion.button>
           </div>
         </div>
