@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import axiosInstance from "../utils/api";
 import { ShoppingCart, X, Plus, Minus, Printer, Settings, Search, Tag, Package, DollarSign, ChevronLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ const POSPage = () => {
   const [showBill, setShowBill] = useState(false);
   const [companyInfo, setCompanyInfo] = useState({
     name: localStorage.getItem("company_name") || "ROYAL KING DHABA",
-    address: localStorage.getItem("company_address") || "Purvanchal Highway Road,UP, Azamgarh 276001",
+    address: localStorage.getItem("company_address") || "Purvanchal Highway Road, UP, Azamgarh 276001",
     phone: localStorage.getItem("company_phone") || "+91-7398549531",
     email: localStorage.getItem("company_email") || "royalkingdhaba9531@gmail.com",
     taxRate: localStorage.getItem("company_taxRate") || "5",
@@ -60,14 +60,13 @@ const POSPage = () => {
   // On component mount
   useEffect(() => {
     fetchProducts();
-    // Load cart from localStorage
     const savedCart = localStorage.getItem("ims_cart");
     if (savedCart) {
       setOrderData(JSON.parse(savedCart));
     }
   }, []);
 
-  // Save cart to localStorage whenever orderData changes
+  // Save cart to localStorage
   useEffect(() => {
     localStorage.setItem("ims_cart", JSON.stringify(orderData));
   }, [orderData]);
@@ -94,7 +93,14 @@ const POSPage = () => {
     }
   };
 
+  const handleClearCategory = () => {
+    setSelectedCategory("");
+    setFilteredProducts(products);
+  };
+
   const handleOrderClick = (product) => {
+    if (product.stock <= 0) return;
+
     const existingProductIndex = orderData.products.findIndex(
       (item) => item.productId === product._id
     );
@@ -123,14 +129,13 @@ const POSPage = () => {
       });
     }
 
-    // On mobile, show the cart after adding an item
     if (window.innerWidth < 768) {
       setShowCart(true);
     }
   };
 
   const handleQuantityChange = (productId, quantity) => {
-    const product = products.find(p => p._id === productId);
+    const product = products.find((p) => p._id === productId);
     if (quantity > product.stock) return;
 
     if (quantity < 1) {
@@ -139,9 +144,7 @@ const POSPage = () => {
     }
 
     const updatedProducts = orderData.products.map((item) =>
-      item.productId === productId
-        ? { ...item, quantity }
-        : item
+      item.productId === productId ? { ...item, quantity } : item
     );
 
     const updatedTotalAmount = updatedProducts.reduce(
@@ -182,7 +185,6 @@ const POSPage = () => {
       );
       if (response.data.success) {
         setShowBill(true);
-        // Refresh products after successful order
         await fetchProducts();
       }
     } catch (err) {
@@ -192,229 +194,206 @@ const POSPage = () => {
     }
   };
 
-  // Replace the handlePrintBill function with this improved version
-const handlePrintBill = () => {
-  const printWindow = window.open('', '_blank');
-  
-  // Calculate total items
-  const totalItems = orderData.products.reduce((sum, item) => sum + item.quantity, 0);
-  
-  // Create QR code data - typically includes invoice number, total amount, and company info
-  const qrData = `INV:${invoiceNum},AMT:${calculateGrandTotal()},COMP:${companyInfo.name}`;
+  const handlePrintBill = () => {
+    const printWindow = window.open("", "_blank");
+    const totalItems = orderData.products.reduce((sum, item) => sum + item.quantity, 0);
+    const qrData = `INV:${invoiceNum},AMT:${calculateGrandTotal()},COMP:${companyInfo.name}`;
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Invoice - ${companyInfo.name}</title>
-      <style>
-        @page {
-          size: 80mm 297mm; /* Standard thermal receipt size */
-          margin: 0;
-        }
-        body {
-          font-family: 'Arial', sans-serif;
-          margin: 0;
-          padding: 5mm;
-          color: #000;
-          font-size: 12px;
-          line-height: 1.4;
-          width: 70mm; /* Actual content width for thermal printers */
-        }
-        .invoice-container {
-          max-width: 70mm;
-        }
-        .company-header {
-          text-align: center;
-          margin-bottom: 5mm;
-        }
-        .company-header h1 {
-          font-size: 14px;
-          margin: 0;
-          font-weight: bold;
-        }
-        .company-header p {
-          margin: 2px 0;
-          font-size: 10px;
-        }
-        .invoice-details {
-          display: flex;
-          flex-direction: column;
-          margin-bottom: 5mm;
-          border-top: 1px dashed #999;
-          border-bottom: 1px dashed #999;
-          padding: 2mm 0;
-        }
-        .invoice-details p {
-          margin: 1mm 0;
-          font-size: 10px;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 10px;
-        }
-        th {
-          text-align: left;
-          font-weight: bold;
-          border-bottom: 1px solid #ddd;
-          padding: 1mm 0;
-        }
-        td {
-          padding: 1mm 0;
-        }
-        .text-right {
-          text-align: right;
-        }
-        .summary-table {
-          width: 100%;
-          margin-top: 3mm;
-        }
-        .summary-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 1mm 0;
-          font-size: 10px;
-        }
-        .summary-row.total {
-          font-weight: bold;
-          border-top: 1px solid #ddd;
-          padding-top: 2mm;
-          margin-top: 1mm;
-        }
-        .footer {
-          text-align: center;
-          margin-top: 5mm;
-          font-size: 10px;
-          padding-top: 3mm;
-          border-top: 1px dashed #999;
-        }
-        .qr-container {
-          display: flex;
-          justify-content: center;
-          margin: 3mm 0;
-        }
-        /* Compact item listing */
-        .item-row td {
-          padding: 0.5mm 0;
-        }
-        .item-name {
-          width: 50%;
-        }
-        .order-summary {
-          margin-top: 5mm;
-          font-weight: bold;
-          text-align: center;
-          border-top: 1px dashed #999;
-          padding-top: 2mm;
-        }
-        @media print {
-          body {
-            width: 100%;
-            padding: 0;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${companyInfo.name}</title>
+        <style>
+          @page {
+            size: 80mm 297mm;
+            margin: 0;
           }
-        }
-      </style>
-      <!-- QR code library -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    </head>
-    <body>
-      <div class="invoice-container">
-        <div class="company-header">
-          <h1>${companyInfo.name}</h1>
-          <p>${companyInfo.address}</p>
-          <p>Tel: ${companyInfo.phone}</p>
-        </div>
-        
-        <div class="invoice-details">
-          <p><strong>Invoice:</strong> ${invoiceNum}</p>
-          <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-          <p><strong>Time:</strong> ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-          <p><strong>Cashier:</strong> ${userName || 'Admin'}</p>
-        </div>
-        
-        <table>
-          <thead>
-            <tr>
-              <th class="item-name">Item</th>
-              <th class="text-right">Qty</th>
-              <th class="text-right">Price</th>
-              <th class="text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${orderData.products.map((item) => {
-              const product = products.find((p) => p._id === item.productId);
-              return `
-                <tr class="item-row">
-                  <td class="item-name">${product?.name}</td>
-                  <td class="text-right">${item.quantity}</td>
-                  <td class="text-right">₹${product?.price.toFixed(2)}</td>
-                  <td class="text-right">₹${(product?.price * item.quantity).toFixed(2)}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-        
-        <div class="summary-table">
-          <div class="summary-row">
-            <span>Subtotal:</span>
-            <span>₹${orderData.totalAmount.toFixed(2)}</span>
+          body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 5mm;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.4;
+            width: 70mm;
+          }
+          .invoice-container {
+            max-width: 70mm;
+          }
+          .company-header {
+            text-align: center;
+            margin-bottom: 5mm;
+          }
+          .company-header h1 {
+            font-size: 14px;
+            margin: 0;
+            font-weight: bold;
+          }
+          .company-header p {
+            margin: 2px 0;
+            font-size: 10px;
+          }
+          .invoice-details {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 5mm;
+            border-top: 1px dashed #999;
+            border-bottom: 1px dashed #999;
+            padding: 2mm 0;
+          }
+          .invoice-details p {
+            margin: 1mm 0;
+            font-size: 10px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+          }
+          th {
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            padding: 1mm 0;
+          }
+          td {
+            padding: 1mm 0;
+          }
+          .text-right {
+            text-align: right;
+          }
+          .summary-table {
+            width: 100%;
+            margin-top: 3mm;
+          }
+          .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1mm 0;
+            font-size: 10px;
+          }
+          .summary-row.total {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 2mm;
+            margin-top: 1mm;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 5mm;
+            font-size: 10px;
+            padding-top: 3mm;
+            border-top: 1px dashed #999;
+          }
+          .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 3mm 0;
+          }
+          .item-row td {
+            padding: 0.5mm 0;
+          }
+          .item-name {
+            width: 50%;
+          }
+          .order-summary {
+            margin-top: 5mm;
+            font-weight: bold;
+            text-align: center;
+            border-top: 1px dashed #999;
+            padding-top: 2mm;
+          }
+          @media print {
+            body {
+              width: 100%;
+              padding: 0;
+            }
+          }
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="company-header">
+            <h1>${companyInfo.name}</h1>
+            <p>${companyInfo.address}</p>
+            <p>Tel: ${companyInfo.phone}</p>
           </div>
-          <div class="summary-row">
-            <span>GST (${companyInfo.taxRate}%):</span>
-            <span>₹${calculateTax()}</span>
+          <div class="invoice-details">
+            <p><strong>Invoice:</strong> ${invoiceNum}</p>
+            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <p><strong>Time:</strong> ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p><strong>Cashier:</strong> ${userName || 'Admin'}</p>
           </div>
-          <div class="summary-row total">
-            <span>Grand Total:</span>
-            <span>₹${calculateGrandTotal()}</span>
+          <table>
+            <thead>
+              <tr>
+                <th class="item-name">Item</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderData.products
+                .map((item) => {
+                  const product = products.find((p) => p._id === item.productId);
+                  return `
+                    <tr class="item-row">
+                      <td class="item-name">${product?.name}</td>
+                      <td class="text-right">${item.quantity}</td>
+                      <td class="text-right">₹${product?.price.toFixed(2)}</td>
+                      <td class="text-right">₹${(product?.price * item.quantity).toFixed(2)}</td>
+                    </tr>
+                  `;
+                })
+                .join('')}
+            </tbody>
+          </table>
+          <div class="summary-table">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span>₹${orderData.totalAmount.toFixed(2)}</span>
+            </div>
+            <div class="summary-row">
+              <span>GST (${companyInfo.taxRate}%):</span>
+              <span>₹${calculateTax()}</span>
+            </div>
+            <div class="summary-row total">
+              <span>Grand Total:</span>
+              <span>₹${calculateGrandTotal()}</span>
+            </div>
+            <div class="order-summary">
+              Total Items: ${totalItems}
+            </div>
           </div>
-          <div class="order-summary">
-            Total Items: ${totalItems}
+          <div class="qr-container" id="qrcode"></div>
+          <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>${companyInfo.email}</p>
           </div>
         </div>
-        
-        <!-- QR Code will be inserted here -->
-        <div class="qr-container" id="qrcode"></div>
-        
-        <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>${companyInfo.email}</p>
-        </div>
-      </div>
-      
-      <script>
-        // Generate QR code after page loads
-        window.onload = function() {
-          new QRCode(document.getElementById("qrcode"), {
-            text: "${qrData}",
-            width: 100,
-            height: 100,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-          });
-          
-          // Print automatically after QR code is generated
-          setTimeout(() => {
-            document.close();
-            window.print();
-            window.onafterprint = () => window.close();
-          }, 500);
-        };
-      </script>
-    </body>
-    </html>
-  `);
-
-
-    setTimeout(() => {
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      printWindow.onafterprint = () => printWindow.close();
-    }, 250);
+        <script>
+          window.onload = function() {
+            new QRCode(document.getElementById("qrcode"), {
+              text: "${qrData}",
+              width: 100,
+              height: 100,
+              colorDark: "#000000",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.H
+            });
+            setTimeout(() => {
+              document.close();
+              window.print();
+              window.onafterprint = () => window.close();
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `);
   };
 
   const handleNewOrder = () => {
@@ -426,7 +405,7 @@ const handlePrintBill = () => {
 
   const handleCompanyInfoChange = (e) => {
     const { name, value } = e.target;
-    setCompanyInfo(prev => {
+    setCompanyInfo((prev) => {
       const updated = { ...prev, [name]: value };
       localStorage.setItem(`company_${name}`, value);
       return updated;
@@ -442,11 +421,10 @@ const handlePrintBill = () => {
     return (parseFloat(orderData.totalAmount) + parseFloat(calculateTax())).toFixed(2);
   };
 
-  // Mobile cart toggle button
   const CartToggleButton = () => (
     <motion.button
       onClick={() => setShowCart(!showCart)}
-      className="md:hidden fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-full shadow-xl z-30"
+      className="md:hidden fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-full shadow-xl z-50"
       whileTap={{ scale: 0.95 }}
       whileHover={{ scale: 1.05 }}
     >
@@ -463,13 +441,16 @@ const handlePrintBill = () => {
     </motion.button>
   );
 
+  // Memoize filtered products to prevent unnecessary re-renders
+  const memoizedFilteredProducts = useMemo(() => filteredProducts, [filteredProducts]);
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-blue-800 text-white p-4 shadow-lg">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <h1 className="text-xl md:text-2xl font-bold truncate max-w-[120px] md:max-w-none">
+            <h1 className="text-xl md:text-2xl font-bold truncate max-w-[200px] md:max-w-none">
               {companyInfo.name} <span className="text-blue-200">POS</span>
             </h1>
             {userName && (
@@ -609,7 +590,6 @@ const handlePrintBill = () => {
               </div>
 
               <div ref={billRef} className="p-6 border border-gray-200 rounded-lg bg-white">
-                {/* Bill Header */}
                 <div className="text-center mb-6">
                   <h1 className="text-2xl font-bold text-gray-800">{companyInfo.name}</h1>
                   <p className="text-gray-600">{companyInfo.address}</p>
@@ -733,16 +713,30 @@ const handlePrintBill = () => {
             </div>
 
             {/* Categories */}
-            <div className="px-4 py-3 border-b border-gray-200 overflow-x-auto bg-blue-50">
-              <div className="flex space-x-2">
+            <div className="px-4 py-3 border-b border-gray-200 bg-blue-50">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-gray-700">Categories</h3>
+                {selectedCategory && (
+                  <motion.button
+                    onClick={handleClearCategory}
+                    className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-200 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Clear Filter
+                  </motion.button>
+                )}
+              </div>
+              <div className="flex space-x-2 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
                 {categories.map((category) => (
                   <motion.button
                     key={category._id}
                     onClick={() => handleChangeCategory(category._id)}
-                    className={`flex items-center px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${selectedCategory === category._id
+                    className={`flex items-center px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${
+                      selectedCategory === category._id
                         ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
                         : "bg-white text-gray-700 hover:bg-blue-100 border border-blue-100"
-                      }`}
+                    }`}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -755,7 +749,12 @@ const handlePrintBill = () => {
 
             {/* Products Grid */}
             <div className="flex-1 p-4 overflow-y-auto bg-blue-50">
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  <RefreshCw size={48} className="animate-spin mb-4" />
+                  <p className="text-lg">Loading products...</p>
+                </div>
+              ) : memoizedFilteredProducts.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
                   <Package size={48} className="mb-4 opacity-30" />
                   <p className="text-lg">No products found</p>
@@ -763,21 +762,20 @@ const handlePrintBill = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {filteredProducts.map((product) => (
+                  {memoizedFilteredProducts.map((product) => (
                     <motion.div
                       key={product._id}
-                      onClick={() => product.stock > 0 && handleOrderClick(product)}
-                      className={`border rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all bg-white shadow-sm hover:shadow-md ${product.stock > 0
-                          ? "hover:border-blue-300"
-                          : "opacity-70 cursor-not-allowed"
-                        }`}
+                      onClick={() => handleOrderClick(product)}
+                      className={`border rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all bg-white shadow-sm hover:shadow-md ${
+                        product.stock > 0 ? "hover:border-blue-300" : "opacity-70 cursor-not-allowed"
+                      }`}
                       whileHover={{ y: -3 }}
                     >
                       <div>
                         <div className="bg-blue-100 p-3 rounded-lg flex items-center justify-center mb-3 h-24">
                           {product.image ? (
                             <img
-                            src={`${import.meta.env.VITE_API_URL}/uploads/${product.image}`}
+                              src={`${import.meta.env.VITE_API_URL}/Uploads/${product.image}`}
                               alt={product.name}
                               className="h-full object-contain"
                             />
@@ -788,12 +786,15 @@ const handlePrintBill = () => {
                         <h3 className="font-medium text-gray-800 text-sm truncate">{product.name}</h3>
                         <div className="flex justify-between items-center mt-2">
                           <p className="text-blue-600 font-bold">₹{product.price.toFixed(2)}</p>
-                          <p className={`text-xs px-2 py-1 rounded-full ${product.stock > 10
-                              ? "bg-green-100 text-green-800"
-                              : product.stock > 0
+                          <p
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              product.stock > 10
+                                ? "bg-green-100 text-green-800"
+                                : product.stock > 0
                                 ? "bg-yellow-100 text-yellow-800"
                                 : "bg-red-100 text-red-800"
-                            }`}>
+                            }`}
+                          >
                             Stock: {product.stock}
                           </p>
                         </div>
@@ -816,7 +817,6 @@ const handlePrintBill = () => {
 
           {/* Right side - Order */}
           <div className={`w-full md:w-4/12 bg-white border-l border-gray-200 flex flex-col shadow-lg ${showCart ? 'flex' : 'hidden md:flex'}`}>
-            {/* Order Header */}
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 to-blue-800 text-white flex items-center justify-between">
               <div className="flex items-center">
                 <button
@@ -840,7 +840,6 @@ const handlePrintBill = () => {
               )}
             </div>
 
-            {/* Order Items */}
             <div className="flex-1 overflow-y-auto p-4 bg-blue-50">
               {orderData.products.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4">
@@ -875,10 +874,11 @@ const handlePrintBill = () => {
                           <motion.button
                             onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
                             disabled={item.quantity >= product?.stock}
-                            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${item.quantity >= product?.stock
+                            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
+                              item.quantity >= product?.stock
                                 ? "bg-gray-100 text-gray-400"
                                 : "bg-blue-100 hover:bg-blue-200"
-                              }`}
+                            }`}
                             whileTap={{ scale: 0.9 }}
                           >
                             <Plus size={14} />
@@ -902,7 +902,6 @@ const handlePrintBill = () => {
               )}
             </div>
 
-            {/* Order Summary */}
             <div className="p-4 bg-white border-t border-gray-200">
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-gray-600">
@@ -919,7 +918,6 @@ const handlePrintBill = () => {
                 </div>
               </div>
 
-              {/* Place Order Button */}
               <motion.button
                 onClick={handleOrderSubmit}
                 disabled={orderData.products.length === 0 || loading}
@@ -933,7 +931,6 @@ const handlePrintBill = () => {
             </div>
           </div>
 
-          {/* Mobile cart toggle button */}
           <CartToggleButton />
         </div>
       )}
