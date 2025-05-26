@@ -722,7 +722,12 @@ const POSPage = () => {
       {!showBill && (
         <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
           {/* Left side - Products */}
-          <div className={`w-full md:w-8/12 flex flex-col bg-white ${showCart ? 'hidden md:flex' : 'flex'}`}>
+          <div
+            className={`w-full md:w-8/12 flex flex-col bg-white ${
+              showCart ? "hidden md:flex" : "flex"
+            } touch-auto`}
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
             {/* Search and filter */}
             <div className="p-4 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -753,7 +758,12 @@ const POSPage = () => {
                     aria-expanded={showCategoryDropdown}
                   >
                     <span className="truncate">{getSelectedCategoryName()}</span>
-                    <ChevronDown size={18} className={`ml-2 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      size={18}
+                      className={`ml-2 transition-transform ${
+                        showCategoryDropdown ? "rotate-180" : ""
+                      }`}
+                    />
                   </motion.button>
                   <AnimatePresence>
                     {showCategoryDropdown && (
@@ -777,8 +787,8 @@ const POSPage = () => {
                             onClick={() => handleChangeCategory(category._id)}
                             className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                               selectedCategory === category._id
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'text-gray-700 hover:bg-blue-50'
+                                ? "bg-blue-100 text-blue-700"
+                                : "text-gray-700 hover:bg-blue-50"
                             }`}
                             role="menuitem"
                           >
@@ -800,13 +810,19 @@ const POSPage = () => {
                   disabled={refreshingProducts}
                   aria-label="Refresh products"
                 >
-                  <RefreshCw size={18} className={refreshingProducts ? "animate-spin" : ""} />
+                  <RefreshCw
+                    size={18}
+                    className={refreshingProducts ? "animate-spin" : ""}
+                  />
                 </motion.button>
               </div>
             </div>
 
             {/* Products Grid */}
-            <div className="flex-1 p-4 overflow-y-auto bg-blue-50">
+            <div
+              className="flex-1 p-4 overflow-y-auto bg-blue-50 touch-auto"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               {loading ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
                   <RefreshCw size={48} className="animate-spin mb-4" />
@@ -819,13 +835,15 @@ const POSPage = () => {
                   <p className="text-sm mt-2">Try a different search or category</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
                   {memoizedFilteredProducts.map((product) => (
                     <motion.div
                       key={product._id}
                       onClick={() => handleOrderClick(product)}
                       className={`border rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all bg-white shadow-sm hover:shadow-md ${
-                        product.stock > 0 ? "hover:border-blue-300" : "opacity-70 cursor-not-allowed"
+                        product.stock > 0
+                          ? "hover:border-blue-300"
+                          : "opacity-70 cursor-not-allowed"
                       }`}
                       whileHover={{ y: -3 }}
                       role="button"
@@ -835,7 +853,9 @@ const POSPage = () => {
                         <div className="bg-blue-100 p-3 rounded-lg flex items-center justify-center mb-3 h-24">
                           {product.image ? (
                             <img
-                              src={`${import.meta.env.VITE_API_URL}/Uploads/${product.image}`}
+                              src={`${import.meta.env.VITE_API_URL}/Uploads/${
+                                product.image
+                              }`}
                               alt={product.name}
                               className="h-full object-contain"
                             />
@@ -843,9 +863,13 @@ const POSPage = () => {
                             <Package size={24} className="text-blue-600" />
                           )}
                         </div>
-                        <h3 className="font-medium text-gray-800 text-sm truncate">{product.name}</h3>
+                        <h3 className="font-medium text-gray-800 text-sm truncate">
+                          {product.name}
+                        </h3>
                         <div className="flex justify-between items-center mt-2">
-                          <p className="text-blue-600 font-bold">₹{product.price.toFixed(2)}</p>
+                          <p className="text-blue-600 font-bold">
+                            ₹{product.price.toFixed(2)}
+                          </p>
                           <p
                             className={`text-xs px-2 py-1 rounded-full ${
                               product.stock > 10
@@ -876,7 +900,12 @@ const POSPage = () => {
           </div>
 
           {/* Right side - Order */}
-          <div className={`w-full md:w-4/12 bg-white border-l border-gray-200 flex flex-col shadow-lg ${showCart ? 'flex' : 'hidden md:flex'}`}>
+          <div
+            className={`w-full md:w-4/12 bg-white border-l border-gray-200 flex flex-col shadow-lg ${
+              showCart ? "flex" : "hidden md:flex"
+            } touch-auto`}
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 to-blue-800 text-white flex items-center justify-between">
               <div className="flex items-center">
                 <button
@@ -902,7 +931,10 @@ const POSPage = () => {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-blue-50">
+            <div
+              className="flex-1 overflow-y-auto p-4 bg-blue-50 touch-auto"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               {orderData.products.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4">
                   <ShoppingCart size={48} className="mb-4 opacity-30" />
@@ -921,21 +953,31 @@ const POSPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                       >
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-800 text-sm truncate">{product?.name}</h4>
-                          <p className="text-xs text-gray-500">₹{product?.price.toFixed(2)} each</p>
+                          <h4 className="font-medium text-gray-800 text-sm truncate">
+                            {product?.name}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            ₹{product?.price.toFixed(2)} each
+                          </p>
                         </div>
                         <div className="flex items-center space-x-2 ml-3">
                           <motion.button
-                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                            onClick={() =>
+                              handleQuantityChange(item.productId, item.quantity - 1)
+                            }
                             className="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
                             whileTap={{ scale: 0.9 }}
                             aria-label={`Decrease quantity of ${product?.name}`}
                           >
                             <Minus size={14} />
                           </motion.button>
-                          <span className="w-7 text-center text-sm font-medium">{item.quantity}</span>
+                          <span className="w-7 text-center text-sm font-medium">
+                            {item.quantity}
+                          </span>
                           <motion.button
-                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                            onClick={() =>
+                              handleQuantityChange(item.productId, item.quantity + 1)
+                            }
                             disabled={item.quantity >= product?.stock}
                             className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
                               item.quantity >= product?.stock

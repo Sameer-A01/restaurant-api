@@ -9,6 +9,9 @@ export default {
       fontFamily: {
         sevillana: ["Sevillana", "sans-serif"],
       },
+      touchAction: {
+        auto: "auto",
+      },
     },
   },
   plugins: [
