@@ -719,7 +719,7 @@ const POSPage = () => {
               aria-label="Open settings"
             >
               <Settings size={18} />
-              <span className="hidden sm:inline">Settings</span>
+              <span className="hidden sm:inline">Settings_</span>
             </motion.button>
           </div>
         </div>
@@ -938,181 +938,188 @@ const POSPage = () => {
       </AnimatePresence>
 
       {!showBill && (
-        <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
-          {/* Left side - Products */}
-          <div
-            className={`w-full md:w-8/12 flex flex-col bg-white ${
-              showCart ? "hidden md:flex" : "flex"
-            }`}
-          >
-            {/* Search and filter */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search size={18} className="text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleFilterProducts}
-                    placeholder="Search products..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                    disabled={loading}
-                    aria-label="Search products"
-                  />
-                </div>
-
-                {/* Category Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <motion.button
-                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    className="flex items-center justify-between w-full sm:w-48 bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-all"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    aria-haspopup="true"
-                    aria-expanded={showCategoryDropdown}
-                  >
-                    <span className="truncate">{getSelectedCategoryName()}</span>
-                    <ChevronDown
-                      size={18}
-                      className={`ml-2 transition-transform ${
-                        showCategoryDropdown ? "rotate-180" : ""
-                      }`}
-                    />
-                  </motion.button>
-                  <AnimatePresence>
-                    {showCategoryDropdown && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-10 w-full sm:w-48 bg-white border border-gray-200 rounded-xl shadow-lg mt-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50"
-                        role="menu"
-                      >
-                        <button
-                          onClick={() => handleChangeCategory("")}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
-                          role="menuitem"
-                        >
-                          All Categories
-                        </button>
-                        {categories.map((category) => (
-                          <button
-                            key={category._id}
-                            onClick={() => handleChangeCategory(category._id)}
-                            className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                              selectedCategory === category._id
-                                ? "bg-blue-100 text-blue-700"
-                                : "text-gray-700 hover:bg-blue-50"
-                            }`}
-                            role="menuitem"
-                          >
-                            <Tag size={14} className="inline-block mr-2" />
-                            {category.name}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Refresh Button */}
-                <motion.button
-                  onClick={fetchProducts}
-                  className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
-                  whileHover={{ rotate: 180 }}
-                  whileTap={{ scale: 0.9 }}
-                  disabled={refreshingProducts}
-                  aria-label="Refresh products"
-                >
-                  <RefreshCw
-                    size={18}
-                    className={refreshingProducts ? "animate-spin" : ""}
-                  />
-                </motion.button>
-              </div>
+  <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+    {/* Left side - Products */}
+    <div
+      className={`w-full md:w-8/12 flex flex-col bg-white ${
+        showCart ? "hidden md:flex" : "flex"
+      }`}
+    >
+      {/* Search and filter */}
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={18} className="text-gray-400" />
             </div>
-
-            {/* Products Grid */}
-            <div className="flex-1 p-4 overflow-y-auto bg-blue-50">
-              {loading ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                  <RefreshCw size={48} className="animate-spin mb-4" />
-                  <p className="text-lg">Loading products...</p>
-                </div>
-              ) : memoizedFilteredProducts.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                  <Package size={48} className="mb-4 opacity-30" />
-                  <p className="text-lg">No products found</p>
-                  <p className="text-sm mt-2">Try a different search or category</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4">
-                  {memoizedFilteredProducts.map((product) => (
-                    <motion.div
-                      key={product._id}
-                      onClick={() => handleOrderClick(product)}
-                      className={`border rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all bg-white shadow-sm hover:shadow-md ${
-                        product.stock > 0
-                          ? "hover:border-blue-300"
-                          : "opacity-70 cursor-not-allowed"
-                      }`}
-                      whileHover={{ y: -3 }}
-                      role="button"
-                      aria-label={`Add ${product.name} to cart`}
-                    >
-                      <div>
-                        <div className="bg-blue-100 p-3 rounded-lg flex items-center justify-center mb-3 h-24">
-                          {product.image ? (
-                            <img
-                              src={`${import.meta.env.VITE_API_URL}/Uploads/${
-                                product.image
-                              }`}
-                              alt={product.name}
-                              className="h-full object-contain"
-                            />
-                          ) : (
-                            <Package size={24} className="text-blue-600" />
-                          )}
-                        </div>
-                        <h3 className="font-medium text-gray-800 text-sm truncate">
-                          {product.name}
-                        </h3>
-                        <div className="flex justify-between items-center mt-2">
-                          <p className="text-blue-600 font-bold">
-                            ₹{product.price.toFixed(2)}
-                          </p>
-                          <p
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              product.stock > 10
-                                ? "bg-green-100 text-green-800"
-                                : product.stock > 0
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            Stock: {product.stock}
-                          </p>
-                        </div>
-                      </div>
-                      {product.stock > 0 && (
-                        <motion.button
-                          className="mt-3 bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded-lg text-xs hover:bg-blue-100 flex items-center justify-center transition-colors"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Plus size={14} className="mr-1" /> Add to Cart
-                        </motion.button>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleFilterProducts}
+              placeholder="Search products..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+              disabled={loading}
+              aria-label="Search products"
+            />
           </div>
 
+          {/* Category Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <motion.button
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="flex items-center justify-between w-full sm:w-48 bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-haspopup="true"
+              aria-expanded={showCategoryDropdown}
+            >
+              <span className="truncate">{getSelectedCategoryName()}</span>
+              <ChevronDown
+                size={18}
+                className={`ml-2 transition-transform ${
+                  showCategoryDropdown ? "rotate-180" : ""
+                }`}
+              />
+            </motion.button>
+            <AnimatePresence>
+              {showCategoryDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute z-10 w-full sm:w-48 bg-white border border-gray-200 rounded-xl shadow-lg mt-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50"
+                  role="menu"
+                >
+                  <button
+                    onClick={() => handleChangeCategory("")}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                    role="menuitem"
+                  >
+                    All Categories
+                  </button>
+                  {categories.map((category) => (
+                    <button
+                      key={category._id}
+                      onClick={() => handleChangeCategory(category._id)}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        selectedCategory === category._id
+                          ? "bg-blue-100 text-blue-700"
+                          : "text-gray-700 hover:bg-blue-50"
+                      }`}
+                      role="menuitem"
+                    >
+                      <Tag size={14} className="inline-block mr-2" />
+                      {category.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Refresh Button */}
+          <motion.button
+            onClick={fetchProducts}
+            className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors flex-shrink-0"
+            whileHover={{ rotate: 180 }}
+            whileTap={{ scale: 0.9 }}
+            disabled={refreshingProducts}
+            aria-label="Refresh products"
+          >
+            <RefreshCw
+              size={18}
+              className={refreshingProducts ? "animate-spin" : ""}
+            />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Products Grid - FIXED FOR MOBILE SCROLLING */}
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-blue-50">
+        <div className="p-4 h-full">
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+              <RefreshCw size={48} className="animate-spin mb-4" />
+              <p className="text-lg">Loading products...</p>
+            </div>
+          ) : memoizedFilteredProducts.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+              <Package size={48} className="mb-4 opacity-30" />
+              <p className="text-lg">No products found</p>
+              <p className="text-sm mt-2">Try a different search or category</p>
+            </div>
+          ) : (
+            <div 
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4 pb-20 md:pb-4"
+              style={{ 
+                minHeight: 'fit-content',
+                WebkitOverflowScrolling: 'touch' // Enable smooth scrolling on iOS
+              }}
+            >
+              {memoizedFilteredProducts.map((product) => (
+                <motion.div
+                  key={product._id}
+                  onClick={() => handleOrderClick(product)}
+                  className={`border rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all bg-white shadow-sm hover:shadow-md ${
+                    product.stock > 0
+                      ? "hover:border-blue-300"
+                      : "opacity-70 cursor-not-allowed"
+                  }`}
+                  whileHover={{ y: -3 }}
+                  role="button"
+                  aria-label={`Add ${product.name} to cart`}
+                >
+                  <div>
+                    <div className="bg-blue-100 p-3 rounded-lg flex items-center justify-center mb-3 h-24">
+                      {product.image ? (
+                        <img
+                          src={`${import.meta.env.VITE_API_URL}/Uploads/${
+                            product.image
+                          }`}
+                          alt={product.name}
+                          className="h-full object-contain"
+                        />
+                      ) : (
+                        <Package size={24} className="text-blue-600" />
+                      )}
+                    </div>
+                    <h3 className="font-medium text-gray-800 text-sm truncate">
+                      {product.name}
+                    </h3>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-blue-600 font-bold">
+                        ₹{product.price.toFixed(2)}
+                      </p>
+                      <p
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          product.stock > 10
+                            ? "bg-green-100 text-green-800"
+                            : product.stock > 0
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        Stock: {product.stock}
+                      </p>
+                    </div>
+                  </div>
+                  {product.stock > 0 && (
+                    <motion.button
+                      className="mt-3 bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded-lg text-xs hover:bg-blue-100 flex items-center justify-center transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Plus size={14} className="mr-1" /> Add to Cart
+                    </motion.button>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
           {/* Right side - Order */}
           <div
             className={`w-full md:w-4/12 bg-white border-l border-gray-200 flex flex-col shadow-lg ${
