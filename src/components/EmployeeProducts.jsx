@@ -221,8 +221,15 @@ const POSPage = () => {
     }
   };
 
-  const handlePrintBill = () => {
-    const printWindow = window.open("", "_blank");
+ const handlePrintBill = () => {
+  try {
+    const printWindow = window.open("", "_blank", "width=800,height=1000,scrollbars=yes,resizable=yes");
+    
+    if (!printWindow) {
+      alert("Pop-up blocked! Please allow pop-ups for this site to print invoices.");
+      return;
+    }
+
     const totalItems = orderData.products.reduce((sum, item) => sum + item.quantity, 0);
     const qrData = `INV:${invoiceNum},AMT:${calculateGrandTotal()},COMP:${companyInfo.name}`;
 
@@ -231,135 +238,209 @@ const POSPage = () => {
       <html>
       <head>
         <title>Invoice - ${companyInfo.name}</title>
+        <meta charset="UTF-8">
         <style>
           @page {
             size: 80mm 297mm;
-            margin: 0;
-          }
-          body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 5mm;
-            color: #000;
-            font-size: 12px;
-            line-height: 1.4;
-            width: 70mm;
-          }
-          .invoice-container {
-            max-width: 70mm;
-          }
-          .company-header {
-            text-align: center;
-            margin-bottom: 5mm;
-          }
-          .company-header h1 {
-            font-size: 14px;
-            margin: 0;
-            font-weight: bold;
-          }
-          .company-header p {
-            margin: 2px 0;
-            font-size: 10px;
-          }
-          .invoice-details {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 5mm;
-            border-top: 1px dashed #999;
-            border-bottom: 1px dashed #999;
-            padding: 2mm 0;
-          }
-          .invoice-details p {
-            margin: 1mm 0;
-            font-size: 10px;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px;
-          }
-          th {
-            text-align: left;
-            font-weight: bold;
-            border-bottom: 1px solid #ddd;
-            padding: 1mm 0;
-          }
-          td {
-            padding: 1mm 0;
-          }
-          .text-right {
-            text-align: right;
-          }
-          .summary-table {
-            width: 100%;
-            margin-top: 3mm;
-          }
-          .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 1mm 0;
-            font-size: 10px;
-          }
-          .summary-row.total {
-            font-weight: bold;
-            border-top: 1px solid #ddd;
-            padding-top: 2mm;
-            margin-top: 1mm;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 5mm;
-            font-size: 10px;
-            padding-top: 3mm;
-            border-top: 1px dashed #999;
-          }
-          .qr-container {
-            display: flex;
-            justify-content: center;
-            margin: 3mm 0;
-          }
-          .item-row td {
-            padding: 0.5mm 0;
-          }
-          .item-name {
-            width: 50%;
-          }
-          .order-summary {
-            margin-top: 5mm;
-            font-weight: bold;
-            text-align: center;
-            border-top: 1px dashed #999;
-            padding-top: 2mm;
+            margin: 2mm;
           }
           @media print {
             body {
               width: 100%;
               padding: 0;
+              margin: 0;
+              font-size: 11px;
             }
+            .no-print {
+              display: none !important;
+            }
+            .invoice-container {
+              width: 100%;
+              max-width: none;
+            }
+          }
+          body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 5mm;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.3;
+            width: 70mm;
+            background: white;
+          }
+          .invoice-container {
+            max-width: 70mm;
+            margin: 0 auto;
+          }
+          .company-header {
+            text-align: center;
+            margin-bottom: 5mm;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 3mm;
+          }
+          .company-header h1 {
+            font-size: 16px;
+            margin: 0 0 2mm 0;
+            font-weight: bold;
+            text-transform: uppercase;
+          }
+          .company-header p {
+            margin: 1mm 0;
+            font-size: 10px;
+            word-wrap: break-word;
+          }
+          .invoice-details {
+            margin-bottom: 5mm;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 3mm;
+          }
+          .invoice-details p {
+            margin: 1mm 0;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-between;
+          }
+          .invoice-details strong {
+            font-weight: bold;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-bottom: 3mm;
+          }
+          th {
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            padding: 1mm 0;
+            font-size: 9px;
+          }
+          td {
+            padding: 0.5mm 0;
+            vertical-align: top;
+            word-wrap: break-word;
+          }
+          .text-right {
+            text-align: right;
+          }
+          .text-center {
+            text-align: center;
+          }
+          .item-name {
+            width: 40%;
+            max-width: 25mm;
+            word-wrap: break-word;
+            hyphens: auto;
+          }
+          .item-qty, .item-price {
+            width: 15%;
+            text-align: right;
+          }
+          .item-total {
+            width: 20%;
+            text-align: right;
+          }
+          .summary-section {
+            border-top: 1px dashed #333;
+            padding-top: 3mm;
+            margin-top: 3mm;
+          }
+          .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5mm 0;
+            font-size: 10px;
+          }
+          .summary-row.total {
+            font-weight: bold;
+            font-size: 12px;
+            border-top: 1px solid #333;
+            margin-top: 2mm;
+            padding-top: 2mm;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 5mm;
+            font-size: 9px;
+            padding-top: 3mm;
+            border-top: 1px dashed #333;
+          }
+          .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 3mm 0;
+            min-height: 80px;
+          }
+          .order-summary {
+            margin-top: 3mm;
+            font-weight: bold;
+            text-align: center;
+            font-size: 11px;
+          }
+          .print-controls {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+          }
+          .print-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+          }
+          .print-btn:hover {
+            background: #0056b3;
+          }
+          .print-btn.secondary {
+            background: #6c757d;
+          }
+          .print-btn.secondary:hover {
+            background: #545b62;
+          }
+          .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
           }
         </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
       </head>
       <body>
-        <div class="invoice-container">
+        <div class="loading" id="loading">
+          Loading invoice... Please wait.
+        </div>
+        
+        <div class="invoice-container" id="invoice-content" style="display: none;">
           <div class="company-header">
             <h1>${companyInfo.name}</h1>
             <p>${companyInfo.address}</p>
             <p>Tel: ${companyInfo.phone}</p>
+            ${companyInfo.email ? `<p>Email: ${companyInfo.email}</p>` : ''}
           </div>
+          
           <div class="invoice-details">
-            <p><strong>Invoice:</strong> ${invoiceNum}</p>
-            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-            <p><strong>Time:</strong> ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-            <p><strong>Cashier:</strong> ${userName || 'Admin'}</p>
+            <p><strong>Invoice:</strong> <span>${invoiceNum}</span></p>
+            <p><strong>Date:</strong> <span>${new Date().toLocaleDateString()}</span></p>
+            <p><strong>Time:</strong> <span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
+            <p><strong>Cashier:</strong> <span>${userName || 'Admin'}</span></p>
           </div>
+          
           <table>
             <thead>
               <tr>
                 <th class="item-name">Item</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Price</th>
-                <th class="text-right">Total</th>
+                <th class="item-qty">Qty</th>
+                <th class="item-price">Price</th>
+                <th class="item-total">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -367,18 +448,19 @@ const POSPage = () => {
                 .map((item) => {
                   const product = products.find((p) => p._id === item.productId);
                   return `
-                    <tr class="item-row">
-                      <td class="item-name">${product?.name}</td>
-                      <td class="text-right">${item.quantity}</td>
-                      <td class="text-right">₹${product?.price.toFixed(2)}</td>
-                      <td class="text-right">₹${(product?.price * item.quantity).toFixed(2)}</td>
+                    <tr>
+                      <td class="item-name">${product?.name || 'Unknown Item'}</td>
+                      <td class="item-qty">${item.quantity}</td>
+                      <td class="item-price">₹${product?.price ? product.price.toFixed(2) : '0.00'}</td>
+                      <td class="item-total">₹${product?.price ? (product.price * item.quantity).toFixed(2) : '0.00'}</td>
                     </tr>
                   `;
                 })
                 .join('')}
             </tbody>
           </table>
-          <div class="summary-table">
+          
+          <div class="summary-section">
             <div class="summary-row">
               <span>Subtotal:</span>
               <span>₹${orderData.totalAmount.toFixed(2)}</span>
@@ -388,40 +470,176 @@ const POSPage = () => {
               <span>₹${calculateTax()}</span>
             </div>
             <div class="summary-row total">
-              <span>Grand Total:</span>
+              <span>GRAND TOTAL:</span>
               <span>₹${calculateGrandTotal()}</span>
             </div>
             <div class="order-summary">
               Total Items: ${totalItems}
             </div>
           </div>
+          
           <div class="qr-container" id="qrcode"></div>
+          
           <div class="footer">
             <p>Thank you for your business!</p>
-            <p>${companyInfo.email}</p>
+            <p>Visit us again!</p>
           </div>
         </div>
+        
+        <div class="print-controls no-print" id="print-controls" style="display: none;">
+          <p>Your invoice is ready to print!</p>
+          <button class="print-btn" onclick="handlePrint()">🖨️ Print Invoice</button>
+          <button class="print-btn secondary" onclick="window.close()">❌ Close</button>
+          <br><br>
+          <small style="color: #666;">
+            💡 Tip: Make sure your printer is connected and ready.<br>
+            For POS printers, ensure proper driver installation.
+          </small>
+        </div>
+        
         <script>
-          window.onload = function() {
-            new QRCode(document.getElementById("qrcode"), {
-              text: "${qrData}",
-              width: 100,
-              height: 100,
-              colorDark: "#000000",
-              colorLight: "#ffffff",
-              correctLevel: QRCode.CorrectLevel.H
-            });
+          let qrGenerated = false;
+          let contentLoaded = false;
+          
+          function showContent() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('invoice-content').style.display = 'block';
+            document.getElementById('print-controls').style.display = 'block';
+            contentLoaded = true;
+          }
+          
+          function generateQR() {
+            try {
+              if (typeof QRCode !== 'undefined') {
+                new QRCode(document.getElementById("qrcode"), {
+                  text: "${qrData}",
+                  width: 80,
+                  height: 80,
+                  colorDark: "#000000",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.M
+                });
+                qrGenerated = true;
+              } else {
+                console.warn('QRCode library not loaded');
+                qrGenerated = true; // Continue without QR
+              }
+            } catch (error) {
+              console.error('QR Code generation failed:', error);
+              qrGenerated = true; // Continue without QR
+            }
+          }
+          
+          function handlePrint() {
+            try {
+              // Focus the window to ensure print dialog appears
+              window.focus();
+              
+              // Hide print controls during printing
+              const controls = document.getElementById('print-controls');
+              if (controls) controls.style.display = 'none';
+              
+              // Add small delay to ensure content is ready
+              setTimeout(() => {
+                const printResult = window.print();
+                
+                // Show controls again after print dialog
+                setTimeout(() => {
+                  if (controls) controls.style.display = 'block';
+                }, 1000);
+                
+                // Handle print completion
+                if (window.matchMedia) {
+                  const mediaQueryList = window.matchMedia('print');
+                  mediaQueryList.addListener((mql) => {
+                    if (!mql.matches) {
+                      // Print dialog closed
+                      console.log('Print dialog closed');
+                    }
+                  });
+                }
+                
+              }, 100);
+              
+            } catch (error) {
+              alert('Print failed: ' + error.message + '\\n\\nPlease check your printer connection and try again.');
+              console.error('Print error:', error);
+            }
+          }
+          
+          // Handle print events
+          window.addEventListener('beforeprint', () => {
+            console.log('Preparing to print...');
+          });
+          
+          window.addEventListener('afterprint', () => {
+            console.log('Print completed or cancelled');
+            // Don't auto-close window, let user decide
+          });
+          
+          // Initialize when page loads
+          window.addEventListener('load', () => {
+            console.log('Window loaded');
+            generateQR();
+            
+            // Show content after QR generation attempt
             setTimeout(() => {
-              document.close();
-              window.print();
-              window.onafterprint = () => window.close();
-            }, 500);
-          };
+              showContent();
+            }, 1000);
+          });
+          
+          // Fallback initialization
+          document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            if (!contentLoaded) {
+              setTimeout(() => {
+                generateQR();
+                showContent();
+              }, 1500);
+            }
+          });
+          
+          // Error handling
+          window.addEventListener('error', (event) => {
+            console.error('Window error:', event.error);
+            if (!contentLoaded) {
+              showContent(); // Show content even if there are errors
+            }
+          });
+          
+          // Prevent accidental closing during print
+          window.addEventListener('beforeunload', (event) => {
+            // Only show warning if print might be in progress
+            // This is commented out to avoid annoying users
+            // event.preventDefault();
+            // event.returnValue = '';
+          });
         </script>
       </body>
       </html>
     `);
-  };
+    
+    printWindow.document.close();
+    
+    // Handle case where print window fails to load
+    const checkWindowLoaded = setTimeout(() => {
+      if (printWindow.closed) {
+        console.warn('Print window was closed before content loaded');
+      } else {
+        console.log('Print window should be ready');
+      }
+    }, 3000);
+    
+    // Cleanup
+    printWindow.addEventListener('beforeunload', () => {
+      clearTimeout(checkWindowLoaded);
+    });
+    
+  } catch (error) {
+    console.error('Print function error:', error);
+    alert(`Print failed: ${error.message}\n\nPlease try again or check your browser settings.`);
+  }
+};
 
   const handleNewOrder = () => {
     setOrderData({ products: [], totalAmount: 0 });
