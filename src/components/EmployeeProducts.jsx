@@ -479,7 +479,7 @@ const POSPage = () => {
   const memoizedFilteredProducts = useMemo(() => filteredProducts, [filteredProducts]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-700 to-blue-800 text-white p-4 shadow-lg">
         <div className="container mx-auto flex justify-between items-center">
@@ -501,7 +501,7 @@ const POSPage = () => {
               aria-label="Open settings"
             >
               <Settings size={18} />
-              <span className="hidden sm:inline">Settings_on</span>
+              <span className="hidden sm:inline">Settings_</span>
             </motion.button>
           </div>
         </div>
@@ -521,6 +521,7 @@ const POSPage = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Company Settings</h2>
@@ -614,6 +615,7 @@ const POSPage = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
               className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Invoice</h2>
@@ -720,13 +722,13 @@ const POSPage = () => {
       </AnimatePresence>
 
       {!showBill && (
-        <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+        <div className="flex flex-1 flex-col md:flex-row min-h-0">
           {/* Left side - Products */}
           <div
             className={`w-full md:w-8/12 flex flex-col bg-white ${
               showCart ? "hidden md:flex" : "flex"
-            } touch-auto`}
-            style={{ WebkitOverflowScrolling: "touch" }}
+            } min-h-0`}
+            style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
           >
             {/* Search and filter */}
             <div className="p-4 border-b border-gray-200">
@@ -772,6 +774,7 @@ const POSPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         className="absolute z-10 w-full sm:w-48 bg-white border border-gray-200 rounded-xl shadow-lg mt-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50"
+                        style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
                         role="menu"
                       >
                         <button
@@ -820,8 +823,8 @@ const POSPage = () => {
 
             {/* Products Grid */}
             <div
-              className="flex-1 p-4 overflow-y-auto bg-blue-50 touch-auto"
-              style={{ WebkitOverflowScrolling: "touch" }}
+              className="flex-1 p-4 overflow-y-auto bg-blue-50 min-h-0"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
             >
               {loading ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
@@ -903,8 +906,8 @@ const POSPage = () => {
           <div
             className={`w-full md:w-4/12 bg-white border-l border-gray-200 flex flex-col shadow-lg ${
               showCart ? "flex" : "hidden md:flex"
-            } touch-auto`}
-            style={{ WebkitOverflowScrolling: "touch" }}
+            } min-h-0`}
+            style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
           >
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 to-blue-800 text-white flex items-center justify-between">
               <div className="flex items-center">
@@ -932,8 +935,8 @@ const POSPage = () => {
             </div>
 
             <div
-              className="flex-1 overflow-y-auto p-4 bg-blue-50 touch-auto"
-              style={{ WebkitOverflowScrolling: "touch" }}
+              className="flex-1 overflow-y-auto p-4 bg-blue-50 min-h-0"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "auto" }}
             >
               {orderData.products.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4">
