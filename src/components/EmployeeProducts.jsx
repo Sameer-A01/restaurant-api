@@ -501,7 +501,7 @@ const POSPage = () => {
               aria-label="Open settings"
             >
               <Settings size={18} />
-              <span className="hidden sm:inline">Settings_on</span>
+              <span className="hidden sm:inline">Settings</span>
             </motion.button>
           </div>
         </div>
@@ -725,8 +725,7 @@ const POSPage = () => {
           <div
             className={`w-full md:w-8/12 flex flex-col bg-white ${
               showCart ? "hidden md:flex" : "flex"
-            } touch-auto`}
-            style={{ WebkitOverflowScrolling: "touch" }}
+            }`}
           >
             {/* Search and filter */}
             <div className="p-4 border-b border-gray-200">
@@ -819,10 +818,7 @@ const POSPage = () => {
             </div>
 
             {/* Products Grid */}
-            <div
-              className="flex-1 p-4 overflow-y-auto bg-blue-50 touch-auto"
-              style={{ WebkitOverflowScrolling: "touch" }}
-            >
+            <div className="flex-1 p-4 overflow-y-auto bg-blue-50">
               {loading ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
                   <RefreshCw size={48} className="animate-spin mb-4" />
@@ -903,8 +899,7 @@ const POSPage = () => {
           <div
             className={`w-full md:w-4/12 bg-white border-l border-gray-200 flex flex-col shadow-lg ${
               showCart ? "flex" : "hidden md:flex"
-            } touch-auto`}
-            style={{ WebkitOverflowScrolling: "touch" }}
+            }`}
           >
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 to-blue-800 text-white flex items-center justify-between">
               <div className="flex items-center">
@@ -931,10 +926,7 @@ const POSPage = () => {
               )}
             </div>
 
-            <div
-              className="flex-1 overflow-y-auto p-4 bg-blue-50 touch-auto"
-              style={{ WebkitOverflowScrolling: "touch" }}
-            >
+            <div className="flex-1 overflow-y-auto p-4 bg-blue-50">
               {orderData.products.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4">
                   <ShoppingCart size={48} className="mb-4 opacity-30" />
